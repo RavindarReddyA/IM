@@ -32,5 +32,5 @@ wss.on('connection', (socket, request) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Server running at http://192.168.1.185:${PORT}`);
+  console.log(`Server running at http://${HOST}:${PORT}`);
 });
