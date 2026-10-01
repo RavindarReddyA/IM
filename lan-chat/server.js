@@ -16,12 +16,29 @@ wss.on('connection', (socket, request) => {
   console.log(`Connected: ${ip} (total: ${wss.clients.size})`);
 
   socket.on('message', (data) => {
-    const text = data.toString();
+    let incoming;
+    try {
+      incoming = JSON.parse(data.toString());
+    } catch (error) {
+      console.log(`Ignored non-JSON message from ${ip}`);
+      return;
+    }
+
+    const name = String(incoming.name || 'Anonymous').trim().slice(0, 20);
+    const text = String(incoming.text || '').trim().slice(0, 200);
+
+    if(!text) {
+      console.log(`Ignored empty message from ${ip}`);
+      return;
+    }
+
     console.log(`Message from ${ip}: ${text}`);
+
+    const outgoing = JSON.stringify({ name, text });
 
     for (const client of wss.clients) {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(text);
+        client.send(outgoing);
       }
     }
   });

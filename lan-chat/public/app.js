@@ -1,3 +1,5 @@
+
+const myName = (prompt('What is your name?') || '').trim() || 'Anonymous';
 const messages = document.getElementById('messages');
 const form = document.getElementById('chat-form');
 const input = document.getElementById('message-input');
@@ -21,7 +23,9 @@ socket.addEventListener('open', () => {
 });
 
 socket.addEventListener('message', (event) => {
-  addMessage(event.data);
+  const msg = JSON.parse(event.data);
+  const isMine = msg.name === myName;
+  addMessage(`${msg.name}: ${msg.text}` , isMine ? 'mine' : '');
 });
 
 socket.addEventListener('close', () => {
@@ -34,7 +38,7 @@ form.addEventListener('submit', (event) => {
   event.preventDefault();
   const text = input.value.trim();
   if (!text) return;
-  socket.send(text);
+  socket.send(JSON.stringify({ name: myName, text }));
   input.value = '';
   input.focus();
 });
