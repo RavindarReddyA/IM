@@ -29,6 +29,12 @@ function addMessage(text, className) {
   messages.scrollTop = messages.scrollHeight;
 }
 
+// Render a message from the server or another client in the chat transcript.
+function showChatMessage(msg) {
+  const isMine = msg.name === myName;
+  addMessage(`${msg.name}: ${msg.text}`, isMine ? 'mine' : '');
+}
+
 // Enable sending and announce successful connection when the socket opens.
 socket.addEventListener('open', () => {
   // Show the current connection state to the user.
@@ -36,17 +42,23 @@ socket.addEventListener('open', () => {
   // Allow message submission only after the socket is ready.
   sendButton.disabled = false;
   // Add a transcript entry so the user sees that they joined.
-  addMessage('You joined the chat', 'system');
+  //addMessage('You joined the chat', 'system');
 });
 
 // Render each message broadcast by the server as it arrives.
+// The server sends both retained history and new messages in the same format.
 socket.addEventListener('message', (event) => {
-  // Decode the server's JSON payload into its sender and message fields.
-  const msg = JSON.parse(event.data);
-  // Identify own broadcasts so they can receive a distinct visual style.
-  const isMine = msg.name === myName;
-  // Append the sender and text, styling messages sent under this name.
-  addMessage(`${msg.name}: ${msg.text}` , isMine ? 'mine' : '');
+  const data = JSON.parse(event.data);
+
+  if (data.type === 'history') {
+    // Show the retained messages so the user can catch up on the conversation.
+    data.messages.forEach(showChatMessage);
+    // Add a transcript entry so the user sees that they joined.
+    addMessage('You joined the chat', 'system');
+  } else if (data.type === 'message') {
+    // Show the new message so the user sees what others are saying in real time.
+    showChatMessage(data);
+  }
 });
 
 // Update the interface and explain how to restore service after disconnect.
